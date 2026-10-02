@@ -1,0 +1,13 @@
+# 卡牌对决 - Render 部署配置(免费)
+# 用法:把项目推到 GitHub → Render 新建 Web Service 选该仓库 → 自动按此文件部署
+services:
+  - type: web
+    name: card-battle
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server/server.js
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production

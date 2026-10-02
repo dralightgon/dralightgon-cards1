@@ -1,0 +1,12 @@
+{
+  "name": "card-battle",
+  "version": "1.0.0",
+  "description": "卡牌对决 - 五阵营卡牌联机对战(1v1/2v2)",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js"
+  },
+  "dependencies": {
+    "ws": "^8.22.0"
+  }
+}

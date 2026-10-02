@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>卡牌对决 · 五阵营联机对战</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="lobby-page">
+  <div class="lobby-bg"></div>
+
+  <!-- ============ 视图:大厅 ============ -->
+  <div id="viewLobby">
+    <header class="lobby-header">
+      <div class="logo">
+        <span class="logo-icon">🂠</span>
+        <div>
+          <h1>卡牌对决</h1>
+          <p>五阵营 · 1v1 / 2v2 / 1v1v1 · 多房间联机对战</p>
+        </div>
+      </div>
+      <div class="conn-status" id="connStatus">连接中…</div>
+    </header>
+
+    <main class="lobby-main">
+      <section class="panel create-panel">
+        <h2>创建房间</h2>
+        <div class="field">
+          <label>我的昵称</label>
+          <input id="nickname" maxlength="12" placeholder="输入昵称">
+        </div>
+        <div class="field">
+          <label>对战模式</label>
+          <div class="mode-switch" id="modeSwitch">
+            <button class="mode-btn active" data-mode="1v1">1v1</button>
+            <button class="mode-btn" data-mode="2v2">2v2</button>
+            <button class="mode-btn" data-mode="1v1v1">1v1v1</button>
+          </div>
+        </div>
+        <div class="field" id="aiField1v1">
+          <label>电脑对手(人机练习)</label>
+          <select id="aiEnemy">
+            <option value="none">无</option>
+            <option value="easy">简单</option>
+            <option value="normal" selected>普通</option>
+            <option value="hard">困难</option>
+          </select>
+        </div>
+        <div class="field ai-pair" id="aiField2v2" style="display:none">
+          <label>电脑队友 / 电脑对手(2v2)</label>
+          <div class="ai-row">
+            <div class="ai-col">
+              <select id="aiAlly">
+                <option value="none">无</option>
+                <option value="easy">简单</option>
+                <option value="normal" selected>普通</option>
+                <option value="hard">困难</option>
+              </select>
+              <span>队友</span>
+            </div>
+            <div class="ai-col">
+              <select id="aiEnemy2">
+                <option value="none">无</option>
+                <option value="easy">简单</option>
+                <option value="normal" selected>普通</option>
+                <option value="hard">困难</option>
+              </select>
+              <span>对手</span>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label>选择阵营</label>
+          <div class="faction-picker" id="factionPicker"></div>
+        </div>
+        <div class="field row">
+          <div class="half">
+            <label>房间名</label>
+            <input id="roomName" maxlength="10" placeholder="留空自动命名">
+          </div>
+          <div class="half">
+            <label>密码(可留空)</label>
+            <input id="roomPwd" maxlength="8" placeholder="私密房间用">
+          </div>
+        </div>
+        <button class="btn btn-primary btn-block" id="btnCreate">创建房间并加入</button>
+      </section>
+
+      <section class="panel room-panel">
+        <h2>房间列表 <span class="room-count" id="roomCount"></span>
+          <button class="btn btn-ghost btn-sm" id="btnRefreshRooms" title="刷新房间列表">🔄 刷新</button>
+        </h2>
+        <div class="room-list" id="roomList">
+          <div class="room-empty">暂无房间,创建一个吧</div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ============ 视图:对战 ============ -->
+  <div id="viewGame" style="display:none">
+    <header class="game-topbar">
+      <div class="gt-left">
+        <span class="gt-title">卡牌对决</span>
+        <span class="gt-room" id="gtRoom"></span>
+        <span class="gt-turn" id="gtTurn"></span>
+      </div>
+      <div class="gt-right">
+        <button class="btn btn-ghost" id="btnLog">战斗日志</button>
+        <button class="btn btn-ghost" id="btnChat">聊天</button>
+        <button class="btn btn-ghost" id="btnLeave">退出</button>
+      </div>
+    </header>
+
+    <main class="game-main">
+      <!-- 等待区(对局未开始) -->
+      <section class="lobby-wait" id="lobbyWait" style="display:none">
+        <div class="wait-head">等待开始 · <span id="waitRoom"></span></div>
+        <div class="wait-teams" id="waitTeams"></div>
+        <div class="wait-actions">
+          <div class="wait-faction-title" id="waitFactionTitle"></div>
+          <div class="faction-picker-small" id="waitFactionPick"></div>
+          <button class="btn btn-primary btn-block" id="btnStart" style="display:none">开始对局</button>
+        </div>
+      </section>
+
+      <!-- 可下拉滚动区:敌方 + 我方(阵营/卡牌多时滚动查看) -->
+      <div class="game-scroll">
+        <section class="side-panel enemy-panel" id="enemyPanel">
+          <!-- 敌方(1v1:1人;2v2:2人各执独立阵营),由 JS 渲染 -->
+        </section>
+
+        <div class="battleline"><span>⚔</span></div>
+
+        <section class="side-panel my-panel" id="myPanel">
+          <!-- 队友区(2v2) -->
+          <div id="allySideArea"></div>
+          <!-- 自己区:建筑/状态/体力(由 JS 渲染) -->
+          <div id="selfSideArea"></div>
+        </section>
+      </div>
+
+      <div class="info-panel" id="infoPanel" style="display:none">
+        <div class="ip-head"><span class="ip-name" id="ipName"></span><span class="ip-tag" id="ipTag"></span><span class="ip-close" id="ipClose">✕</span></div>
+        <div class="ip-desc" id="ipDesc"></div>
+      </div>
+
+      <section class="hand-area">
+        <div class="hand-topline">
+          <div class="hand-turn-hint" id="handHint"></div>
+        </div>
+        <div class="hand-row" id="handRow"></div>
+        <div class="selected-zone" id="selectedZone" style="display:none">
+          <div class="sz-card" id="selectedCard"></div>
+          <div class="sz-info">
+            <div class="sz-target-hint" id="targetHint"></div>
+            <div class="sz-subcount" id="subCountBox" style="display:none"></div>
+          </div>
+          <div class="sz-btns">
+            <button class="btn btn-primary" id="btnConfirmPlay">确定出牌</button>
+            <button class="btn btn-ghost" id="btnCancelSelect">取消</button>
+          </div>
+        </div>
+        <div class="hand-controls">
+          <div class="energy-badge" id="energyBadge" style="display:none"><span class="eb-ico">⚡</span><span id="energyBadgeText"></span></div>
+          <button class="btn btn-end" id="btnEndTurn">结束回合</button>
+        </div>
+      </section>
+    </main>
+
+    <div class="drawer" id="logDrawer">
+      <div class="drawer-head">战斗日志 <button class="btn btn-ghost close-x" data-close="logDrawer">✕</button></div>
+      <div class="drawer-body" id="logBody"></div>
+    </div>
+
+    <div class="drawer" id="chatDrawer">
+      <div class="drawer-head">聊天 <button class="btn btn-ghost close-x" data-close="chatDrawer">✕</button></div>
+      <div class="drawer-body" id="chatBody"></div>
+      <div class="drawer-input">
+        <input id="chatInput" maxlength="100" placeholder="输入消息…">
+        <button class="btn btn-primary" id="chatSend">发送</button>
+      </div>
+    </div>
+
+    <div class="modal-mask" id="endModal" style="display:none">
+      <div class="modal">
+        <h2 id="endTitle"></h2>
+        <p id="endSub"></p>
+        <button class="btn btn-primary" id="btnBackLobby">返回大厅</button>
+      </div>
+    </div>
+
+    <div class="modal-mask" id="cardDetailModal" style="display:none">
+      <div class="modal card-detail">
+        <div class="cd-head">
+          <span class="cd-name" id="cdName"></span>
+          <button class="btn btn-ghost close-x" data-close="cardDetailModal">✕</button>
+        </div>
+        <div class="cd-meta"><span id="cdType"></span><span id="cdCost"></span></div>
+        <div class="cd-desc" id="cdDesc"></div>
+        <div class="cd-tip">长按查看效果 · 点击空白处关闭</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="js/cards-data.js"></script>
+  <script src="js/net.js"></script>
+  <script src="js/lobby.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
